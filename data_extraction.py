@@ -1,6 +1,5 @@
 import pandas as pd
-from sqlalchemy import create_engine, inspect
-import database_utils
+from database_utils import DatabaseConnector
 
 
 class DataExtractor:
@@ -10,19 +9,20 @@ class DataExtractor:
     def _init_(self):
         pass
 
-    def read_rds_table(self, yaml_file: str):
+    def read_rds_table(self, connector_instance: DatabaseConnector, table_name: str):
         '''
         Insert docstring
         '''
-        connector = database_utils.DatabaseConnector()
-        print(connector.list_db_tables(yaml_file))
-        engine = connector.init_db_engine(yaml_file)
+        database_connector = connector_instance
+        engine = database_connector.init_db_engine()
         with engine.connect() as connection:
-            legacy_users = pd.read_sql_table("legacy_users", connection)
-        return legacy_users
+            table = pd.read_sql_table(table_name, connection)
+        return table
 
 
 if __name__ == '__main__':
     data = DataExtractor()
-    pd.set_option('display.max_columns', None)
-    print(data.read_rds_table('db_creds.yaml'))
+    connector = DatabaseConnector()
+    #pd.set_option('display.max_columns', None)
+    print(connector.list_db_tables())
+    print(data.read_rds_table(connector, 'legacy_users'))
