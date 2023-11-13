@@ -35,11 +35,12 @@ class DataCleaning:
         users['join_date'] = pd.to_datetime(users['join_date'], format='mixed', errors='coerce')
         users['date_of_birth'] = pd.to_datetime(users['date_of_birth'], format='mixed', errors='coerce')
         users.replace(mapping_dict, inplace=True)
+        users.dropna(inplace=True)
         
         users['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
-        users['phone_number'].loc[((users['country_code']=='GB') & (~users['phone_number'].str.match(uk_number_regex))) | 
-                                  ((users['country_code']=='US') & (~users['phone_number'].str.match(us_number_regex))) | 
-                                  ((users['country_code']=='DE') & (~users['phone_number'].str.match(de_number_regex)))] = np.nan
+        users.loc[((users['country_code']=='GB') & (~users['phone_number'].str.match(uk_number_regex))) | 
+                  ((users['country_code']=='US') & (~users['phone_number'].str.match(us_number_regex))) | 
+                  ((users['country_code']=='DE') & (~users['phone_number'].str.match(de_number_regex))), 'phone_number'] = np.nan
         
         users.dropna(inplace=True)
         users.set_index("index", inplace=True)
@@ -47,12 +48,13 @@ class DataCleaning:
         
         return users
 
+
 if __name__ == '__main__':
-    connector = DatabaseConnector('db_creds.yaml')
+    rds_connector = DatabaseConnector('db_creds.yaml')
+    local_db_connector = DatabaseConnector('sales_data_creds.yaml')
     extractor = DataExtractor()
     data = DataCleaning()
-    
-    legacy_users = extractor.read_rds_table(connector, 'legacy_users')
-    #pd.set_option('display.max_columns', None)
-    data.clean_user_data(legacy_users)
-    
+
+    print(rds_connector.list_db_tables())
+    table = extractor.read_rds_table(rds_connector, 'legacy_users')
+    cleaned_data = data.clean_user_data(table)

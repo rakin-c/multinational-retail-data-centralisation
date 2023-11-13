@@ -41,7 +41,15 @@ class DatabaseConnector:
             inspector = inspect(engine)
         return inspector.get_table_names()
 
+    def upload_to_db(self, data: pd.DataFrame, table_name: str):
+        '''
+        Insert docstring
+        '''
+        engine = self.init_db_engine()
+        with engine.connect() as connection:
+            data.to_sql(table_name, connection, if_exists='replace')
+
 
 if __name__ == '__main__':
-    data = DatabaseConnector('db_creds.yaml')
-    print(data.list_db_tables())
+    rds_connector = DatabaseConnector('db_creds.yaml')
+    print(rds_connector.list_db_tables())
