@@ -1,56 +1,58 @@
-import pandas as pd
-from data_extraction import DataExtractor
-from database_utils import DatabaseConnector
 import numpy as np
-import re
+import pandas as pd
+from database_utils import DatabaseConnector
+from data_extraction import DataExtractor
 
 
 class DataCleaning:
     '''
     Insert docstring
     '''
-    def _init_(self):
+    def __init__(self):
         pass
 
     def clean_user_data(self, users: pd.DataFrame):
         '''
         Insert docstring
         '''
-        column_names = users.columns
-        
         mapping_dict = {'NULL': np.nan, 'GGB': 'GB'}
         phone_number_mapping = {
-                                #r'\+44': '0',
-                                #r'\+49': '0',
-                                #r'\+1': '0',
+                                r'\+44': '0',
+                                r'\+49': '0',
+                                r'\+1': '',
                                 r'\(0\)': '',
                                 r'\(': '',
                                 r'\)': '',
                                 r' ': '',
-                                r'-': ''
+                                r'-': '',
+                                r'\.': ''
                                 }
         
-        #users.set_index("index", inplace=True)
-        #users.sort_values("index", ascending=True, inplace=True)
+        uk_number_regex = r'^((\(?0\d{4}\)?\s?\d{3}\s?\d{3})|(\(?0\d{3}\)?\s?\d{3}\s?\d{4})|(\(?0\d{2}\)?\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?$'
+        us_number_regex = r'^((00|\+)1)?(\(?[2-9]\d{2}\)?\d{3}\d{4})(x\d{3,5}$)?'
+        de_number_regex = r'^((00|\+)49)?(0?[2-9][0-9]{1,})$'
+        
         users['join_date'] = pd.to_datetime(users['join_date'], format='mixed', errors='coerce')
         users['date_of_birth'] = pd.to_datetime(users['date_of_birth'], format='mixed', errors='coerce')
         users.replace(mapping_dict, inplace=True)
-        users['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
-        users.dropna(inplace=True)
-        print(users)
-        '''
-        for column in column_names:
-            print(users[column].value_counts(), '\n')
-        print(users.info(), '\n')
-        '''
         
+        users['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
+        users['phone_number'].loc[((users['country_code']=='GB') & (~users['phone_number'].str.match(uk_number_regex))) | 
+                                  ((users['country_code']=='US') & (~users['phone_number'].str.match(us_number_regex))) | 
+                                  ((users['country_code']=='DE') & (~users['phone_number'].str.match(de_number_regex)))] = np.nan
+        
+        users.dropna(inplace=True)
+        users.set_index("index", inplace=True)
+        users.sort_values("index", ascending=True, inplace=True)
+        
+        return users
 
 if __name__ == '__main__':
-    connector = DatabaseConnector()
+    connector = DatabaseConnector('db_creds.yaml')
     extractor = DataExtractor()
     data = DataCleaning()
     
     legacy_users = extractor.read_rds_table(connector, 'legacy_users')
     #pd.set_option('display.max_columns', None)
-    data.clean_user_data(legacy_users, 'users')
+    data.clean_user_data(legacy_users)
     
