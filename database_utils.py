@@ -7,19 +7,20 @@ class DatabaseConnector:
     '''
     Insert docstring
     '''
-    def _init_(self):
+    def __init__(self, filepath: str):
+        self.filepath = filepath
         pass
 
     def read_db_creds(self):
         '''
         Reads the database credentials from a yaml file into a python dictionary.
 
-        Parameters:
-        ----------
+        Returns:
+        -------
         yaml_file: str
             The yaml file to be parsed into a dictionary.
         '''
-        with open('db_creds.yaml', 'r') as file:
+        with open(self.filepath, 'r') as file:
             db_creds = yaml.safe_load(file)
         return db_creds
     
@@ -42,5 +43,5 @@ class DatabaseConnector:
 
 
 if __name__ == '__main__':
-    data = DatabaseConnector()
+    data = DatabaseConnector('db_creds.yaml')
     print(data.list_db_tables())
