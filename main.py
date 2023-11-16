@@ -19,4 +19,10 @@ def extract_pdf():
     pdf_table = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
     return pdf_table
 
-print(extract_pdf())
+def clean_pdf_data():
+    cleaner = DataCleaning()
+    pdf_table = extract_pdf()
+    cleaned_pdf_table = cleaner.clean_card_data(pdf_table)
+    return cleaned_pdf_table
+
+print(clean_pdf_data())
