@@ -43,11 +43,11 @@ class DataExtractor:
         number_of_stores = self.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', self.api_headers)
 
         for store_number in range(number_of_stores):
-            url = retrieve_store_endpoint + f'{store_number}'
-            response = requests.get(url, self.api_headers)
+            url = retrieve_store_endpoint + f'/{store_number}'
+            response = requests.get(url, headers=self.api_headers)
             stores_data.append(response.json())
         
-        stores_df = pd.DataFrame.from_records(stores_data)
+        stores_df = pd.DataFrame(stores_data)
         return stores_df
 
 
