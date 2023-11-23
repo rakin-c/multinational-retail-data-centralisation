@@ -35,4 +35,26 @@ def write_card_data():
     cleaned_card_data = clean_pdf_data()
     local_db_connector.upload_to_db(cleaned_card_data, 'dim_card_details')
     
-write_card_data()
+def extract_number_of_stores():
+    extractor = DataExtractor()
+    number_of_stores = extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', extractor.api_headers)
+    print(f"Number of stores: {number_of_stores}")
+    return number_of_stores
+
+def extract_store_data():
+    extractor = DataExtractor()
+    store_data = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
+    return store_data
+
+def clean_store_data():
+    cleaner = DataCleaning()
+    store_data = extract_store_data()
+    cleaned_store_data = cleaner.clean_store_data(store_data)
+    return cleaned_store_data
+
+def write_store_data():
+    local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+    cleaned_store_data = clean_store_data()
+    local_db_connector.upload_to_db(cleaned_store_data, 'dim_store_details')
+
+write_store_data()
