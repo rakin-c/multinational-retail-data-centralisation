@@ -57,4 +57,9 @@ def write_store_data():
     cleaned_store_data = clean_store_data()
     local_db_connector.upload_to_db(cleaned_store_data, 'dim_store_details')
 
-write_store_data()
+def extract_product_data():
+    extractor = DataExtractor()
+    products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv')
+    return products_df
+
+print(extract_product_data())

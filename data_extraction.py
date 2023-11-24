@@ -25,6 +25,8 @@ class DataExtractor:
         Returns number of stores accessbile via API.
     retrieve_stores_data(retrieve_stores_enpoint, api_headers)
         Extracts store data for each store into a DataFrame.
+    extract_from_s3(s3_address)
+        Downloads file from an S3 bucket and reads it into a DataFrame.
     '''
     def __init__(self):
         self.api_headers = {
@@ -118,10 +120,23 @@ class DataExtractor:
 
     def extract_from_s3(self, s3_address: str) -> pd.DataFrame:
         '''
-        Insert docstring
+        Downloads file containing product data and extracts information into a DataFrame.
+
+        Parameters:
+        ----------
+        s3_address: str
+            The S3 URI of the object to be downloaded and extracted.
+
+        Returns:
+        -------
+        DataFrame
         '''
-        
-        pass
+        s3_address_split = s3_address.split('/')
+        s3 = boto3.client('s3')
+        s3.download_file(s3_address_split[2], s3_address_split[-1], 'products.csv')
+        with open('products.csv', 'r') as file:
+            products_df = pd.read_csv(file)
+        return products_df
 
 
 if __name__ == '__main__':
