@@ -25,16 +25,16 @@ class DataCleaning:
         DataFrame
         '''
         phone_number_mapping = {
-                                r'\+44': '0',
-                                r'\+49': '0',
-                                r'\+1': '',
-                                r'\(0\)': '',
-                                r'\(': '',
-                                r'\)': '',
-                                ' ': '',
-                                '-': '',
-                                r'\.': ''
-                                }
+            r'\+44': '0',
+            r'\+49': '0',
+            r'\+1': '',
+            r'\(0\)': '',
+            r'\(': '',
+            r'\)': '',
+            ' ': '',
+            '-': '',
+            r'\.': ''
+        }
         
         uk_number_regex = r'^((\(?0\d{4}\)?\s?\d{3}\s?\d{3})|(\(?0\d{3}\)?\s?\d{3}\s?\d{4})|(\(?0\d{2}\)?\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?$'
         us_number_regex = r'^((00|\+)1)?(\(?[2-9]\d{2}\)?\d{3}\d{4})(x\d{3,5}$)?'
@@ -88,12 +88,12 @@ class DataCleaning:
         Insert docstring
         '''
         mapping_dict = {
-                        'eeEurope': 'Europe',
-                        'eeAmerica': 'America',
-                        'NULL': np.nan,
-                        None: np.nan,
-                        'N/A': np.nan
-                        }
+            'eeEurope': 'Europe',
+            'eeAmerica': 'America',
+            'NULL': np.nan,
+            None: np.nan,
+            'N/A': np.nan
+        }
 
         store_data.replace(mapping_dict, inplace=True)
         store_data['staff_numbers'] = store_data['staff_numbers'].str.extract(r'(\d+)')
@@ -111,22 +111,53 @@ class DataCleaning:
         store_data.sort_index(ascending=True, inplace=True)
 
         return store_data
+    
+    def convert_product_weights(self, products_df: pd.DataFrame) -> pd.DataFrame:
+        '''
+        Insert docstring
+        '''
+        products_df['weight'].replace({' ': ''}, inplace=True, regex=True)
+        products_df.dropna(inplace=True)
+        
+        products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'].str.rstrip('g').str.split('x')
+        prod_list = []
+        for item in products_df['weight']:
+            if type(item) == list:
+                item = list(map(float, item))
+                prod = np.prod(item)
+                prod_list.append(prod)
+        products_df.loc[products_df['weight'].apply(type) == list, 'weight'] = prod_list
 
+        products_df.loc[products_df['weight'].str.contains('ml') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('ml') == True, 'weight'].str.rstrip('ml').astype('float', errors='raise').apply(lambda x: (x/1000))
+        products_df.loc[products_df['weight'].str.contains('oz') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('oz') == True, 'weight'].str.rstrip('oz').astype('float', errors='raise').apply(lambda x: (x/35.274))
+        products_df.loc[products_df['weight'].str.match(r'.+\d+g$') == True, 'weight'] = products_df.loc[products_df['weight'].str.match(r'.+\d+g$') == True, 'weight'].str.rstrip('g').astype('float', errors='raise').apply(lambda x: (x/1000))
+        products_df.loc[products_df['weight'].str.contains('kg') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('kg') == True, 'weight'].str.rstrip('kg').astype('float')
+
+        products_df['weight'] = pd.to_numeric(products_df['weight'], errors='coerce')
+
+        return products_df
+
+    def clean_products_data(products_df: pd.DataFrame) -> pd.DataFrame:
+        pass
 
 if __name__ == '__main__':
     rds_connector = DatabaseConnector('db_creds.yaml')
     local_db_connector = DatabaseConnector('sales_data_creds.yaml')
     extractor = DataExtractor()
     cleaner = DataCleaning()
+    '''
+    print(rds_connector.list_db_tables())
+    table = extractor.read_rds_table(rds_connector, 'legacy_users')
+    cleaned_user_data = cleaner.clean_user_data(table)
+    print(cleaned_user_data)
     
-    #print(rds_connector.list_db_tables())
-    #table = extractor.read_rds_table(rds_connector, 'legacy_users')
-    #cleaned_user_data = cleaner.clean_user_data(table)
-    #print(cleaned_user_data)
-    
-    #pdf_table = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
-    #cleaned_card_data = cleaner.clean_card_data(pdf_table)
-    #print(cleaned_card_data)
+    pdf_table = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
+    cleaned_card_data = cleaner.clean_card_data(pdf_table)
+    print(cleaned_card_data)
 
     stores_data = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
     print(cleaner.clean_store_data(stores_data))
+    '''
+    #pd.set_option('display.max_columns', None)
+    products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv')
+    cleaner.convert_product_weights(products_df)

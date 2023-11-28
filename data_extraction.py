@@ -118,7 +118,7 @@ class DataExtractor:
         stores_df = pd.DataFrame(stores_data)
         return stores_df
 
-    def extract_from_s3(self, s3_address: str) -> pd.DataFrame:
+    def extract_from_s3(self, s3_address: str, file_name: str) -> pd.DataFrame:
         '''
         Downloads file containing product data and extracts information into a DataFrame.
 
@@ -126,6 +126,8 @@ class DataExtractor:
         ----------
         s3_address: str
             The S3 URI of the object to be downloaded and extracted.
+        file_name: str
+            Name of the file to save the S3 object as.
 
         Returns:
         -------
@@ -133,8 +135,10 @@ class DataExtractor:
         '''
         s3_address_split = s3_address.split('/')
         s3 = boto3.client('s3')
-        s3.download_file(s3_address_split[2], s3_address_split[-1], 'products.csv')
-        with open('products.csv', 'r') as file:
+        s3_bucket_name = s3_address_split[2]
+        s3_object_name = '/'.join(s3_address_split[3:])
+        s3.download_file(s3_bucket_name, s3_object_name, file_name)
+        with open(file_name, 'r') as file:
             products_df = pd.read_csv(file)
         return products_df
 
