@@ -1,3 +1,4 @@
 __pycache__/
 db_creds.yaml
 sales_data_creds.yaml
+products.csv

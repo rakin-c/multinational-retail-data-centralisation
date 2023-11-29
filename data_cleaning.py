@@ -11,13 +11,13 @@ class DataCleaning:
     def __init__(self):
         pass
 
-    def clean_user_data(self, user_data: pd.DataFrame) -> pd.DataFrame:
+    def clean_user_data(self, users_df: pd.DataFrame) -> pd.DataFrame:
         '''
         Cleans data about the company's users - verifies information is valid and removes NULL values.
 
         Parameters:
         ----------
-        user_data: DataFrame
+        users_df: DataFrame
             The user information extracted from the company's RDS database.
         
         Returns:
@@ -35,55 +35,64 @@ class DataCleaning:
             '-': '',
             r'\.': ''
         }
+
+        mapping_dict = {
+            'NULL': np.nan,
+            'GGB': 'GB'
+        }
         
         uk_number_regex = r'^((\(?0\d{4}\)?\s?\d{3}\s?\d{3})|(\(?0\d{3}\)?\s?\d{3}\s?\d{4})|(\(?0\d{2}\)?\s?\d{4}\s?\d{4}))(\s?\#(\d{4}|\d{3}))?$'
         us_number_regex = r'^((00|\+)1)?(\(?[2-9]\d{2}\)?\d{3}\d{4})(x\d{3,5}$)?'
         de_number_regex = r'^((00|\+)49)?(0?[2-9][0-9]{1,})$'
         
-        user_data.replace({'NULL': np.nan, 'GGB': 'GB'}, inplace=True)
-        user_data['join_date'] = pd.to_datetime(user_data['join_date'], format='mixed', errors='coerce')
-        user_data['date_of_birth'] = pd.to_datetime(user_data['date_of_birth'], format='mixed', errors='coerce')
-        user_data.dropna(inplace=True)
+        users_df.replace(mapping_dict, inplace=True)
+        users_df['join_date'] = pd.to_datetime(users_df['join_date'], format='mixed', errors='coerce')
+        users_df['date_of_birth'] = pd.to_datetime(users_df['date_of_birth'], format='mixed', errors='coerce')
+        users_df.dropna(inplace=True)
         
-        user_data['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
-        user_data.loc[((user_data['country_code']=='GB') & (~user_data['phone_number'].str.match(uk_number_regex))) |
-                      ((user_data['country_code']=='US') & (~user_data['phone_number'].str.match(us_number_regex))) |
-                      ((user_data['country_code']=='DE') & (~user_data['phone_number'].str.match(de_number_regex))), 'phone_number'] = np.nan
-        user_data.dropna(inplace=True)
+        users_df['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
+        users_df.loc[((users_df['country_code']=='GB') & (~users_df['phone_number'].str.match(uk_number_regex))) |
+                      ((users_df['country_code']=='US') & (~users_df['phone_number'].str.match(us_number_regex))) |
+                      ((users_df['country_code']=='DE') & (~users_df['phone_number'].str.match(de_number_regex))), 'phone_number'] = np.nan
+        users_df.dropna(inplace=True)
 
-        user_data.drop(['index'], axis=1, inplace=True)
-        idx = np.arange(0, len(user_data), 1)
-        user_data.set_index(idx, inplace=True)
-        user_data.sort_index(ascending=True, inplace=True)
+        users_df.drop(['index'], axis=1, inplace=True)
+        idx = np.arange(0, len(users_df), 1)
+        users_df.set_index(idx, inplace=True)
+        users_df.sort_index(ascending=True, inplace=True)
         
-        return user_data
+        return users_df
 
-    def clean_card_data(self, card_data: pd.DataFrame) -> pd.DataFrame:
+    def clean_card_data(self, cards_df: pd.DataFrame) -> pd.DataFrame:
         '''
         Cleans company user card data, removing erroneous and NULL values, and verifies correct formatting.
 
         Parameters:
         ----------
-        card_data: DataFrame
+        cards_df: DataFrame
             Card information extracted from a PDF document.
 
         Returns:
         -------
         DataFrame
         '''
-        card_data.replace({'NULL': np.nan, }, inplace=True)
-        card_data['date_payment_confirmed'] = pd.to_datetime(card_data['date_payment_confirmed'], errors='coerce')
-        card_data.loc[~(card_data['expiry_date'].str.match(r'^((0[1-9])|(1[0-2]))\/(\d{2})$', na=True)), 'expiry_date'] = np.nan
-        card_data.loc[~(card_data['card_number'].str.match(r'^\d{11,}$', na=True)), 'card_number'] = np.nan
-        card_data.dropna(inplace=True)
+        mapping_dict = {
+            'NULL': np.nan
+        }
 
-        idx = np.arange(0, len(card_data), 1)
-        card_data.set_index(idx, inplace=True)
-        card_data.sort_index(ascending=True, inplace=True)
+        cards_df.replace(mapping_dict, inplace=True)
+        cards_df['date_payment_confirmed'] = pd.to_datetime(cards_df['date_payment_confirmed'], errors='coerce')
+        cards_df.loc[~(cards_df['expiry_date'].str.match(r'^((0[1-9])|(1[0-2]))\/(\d{2})$', na=True)), 'expiry_date'] = np.nan
+        cards_df.loc[~(cards_df['card_number'].str.match(r'^\d{11,}$', na=True)), 'card_number'] = np.nan
+        cards_df.dropna(inplace=True)
+
+        idx = np.arange(0, len(cards_df), 1)
+        cards_df.set_index(idx, inplace=True)
+        cards_df.sort_index(ascending=True, inplace=True)
         
-        return card_data
+        return cards_df
     
-    def clean_store_data(self, store_data: pd.DataFrame) -> pd.DataFrame:
+    def clean_store_data(self, stores_df: pd.DataFrame) -> pd.DataFrame:
         '''
         Insert docstring
         '''
@@ -95,30 +104,34 @@ class DataCleaning:
             'N/A': np.nan
         }
 
-        store_data.replace(mapping_dict, inplace=True)
-        store_data['staff_numbers'] = store_data['staff_numbers'].str.extract(r'(\d+)')
-        store_data['opening_date'] = pd.to_datetime(store_data['opening_date'], format='mixed', errors='coerce')
-        store_data['longitude'] = pd.to_numeric(store_data['longitude'], errors='coerce')
-        store_data['latitude'] = pd.to_numeric(store_data['latitude'], errors='coerce')
-        store_data['staff_numbers'] = pd.to_numeric(store_data['staff_numbers'])
+        stores_df.replace(mapping_dict, inplace=True)
+        stores_df['staff_numbers'] = stores_df['staff_numbers'].str.extract(r'(\d+)')
+        stores_df['opening_date'] = pd.to_datetime(stores_df['opening_date'], format='mixed', errors='coerce')
+        stores_df['longitude'] = pd.to_numeric(stores_df['longitude'], errors='coerce')
+        stores_df['latitude'] = pd.to_numeric(stores_df['latitude'], errors='coerce')
+        stores_df['staff_numbers'] = pd.to_numeric(stores_df['staff_numbers'])
         
-        store_data.dropna(subset=['opening_date'], inplace=True)
-        store_data.drop(['lat'], axis=1, inplace=True)
+        stores_df.dropna(subset=['opening_date'], inplace=True)
+        stores_df.drop(['lat'], axis=1, inplace=True)
 
-        store_data.drop(['index'], axis=1, inplace=True)
-        idx = np.arange(0, len(store_data), 1)
-        store_data.set_index(idx, inplace=True)
-        store_data.sort_index(ascending=True, inplace=True)
+        stores_df.drop(['index'], axis=1, inplace=True)
+        idx = np.arange(0, len(stores_df), 1)
+        stores_df.set_index(idx, inplace=True)
+        stores_df.sort_index(ascending=True, inplace=True)
 
-        return store_data
+        return stores_df
     
     def convert_product_weights(self, products_df: pd.DataFrame) -> pd.DataFrame:
         '''
         Insert docstring
         '''
+        mapping_dict = {
+            ' ': ''
+        }
+
         products_df['weight'].replace({' ': ''}, inplace=True, regex=True)
         products_df.dropna(inplace=True)
-        
+
         products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'].str.rstrip('g').str.split('x')
         prod_list = []
         for item in products_df['weight']:
@@ -126,38 +139,73 @@ class DataCleaning:
                 item = list(map(float, item))
                 prod = np.prod(item)
                 prod_list.append(prod)
+        prod_list = [i/1000 for i in prod_list]
         products_df.loc[products_df['weight'].apply(type) == list, 'weight'] = prod_list
 
         products_df.loc[products_df['weight'].str.contains('ml') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('ml') == True, 'weight'].str.rstrip('ml').astype('float', errors='raise').apply(lambda x: (x/1000))
         products_df.loc[products_df['weight'].str.contains('oz') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('oz') == True, 'weight'].str.rstrip('oz').astype('float', errors='raise').apply(lambda x: (x/35.274))
-        products_df.loc[products_df['weight'].str.match(r'.+\d+g$') == True, 'weight'] = products_df.loc[products_df['weight'].str.match(r'.+\d+g$') == True, 'weight'].str.rstrip('g').astype('float', errors='raise').apply(lambda x: (x/1000))
+        products_df.loc[products_df['weight'].str.match(r'.*\dg$') == True, 'weight'] = products_df.loc[products_df['weight'].str.match(r'.*\dg$') == True, 'weight'].str.rstrip('g').astype('float', errors='raise').apply(lambda x: (x/1000))
         products_df.loc[products_df['weight'].str.contains('kg') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('kg') == True, 'weight'].str.rstrip('kg').astype('float')
 
         products_df['weight'] = pd.to_numeric(products_df['weight'], errors='coerce')
 
         return products_df
 
-    def clean_products_data(products_df: pd.DataFrame) -> pd.DataFrame:
-        pass
+    def clean_products_data(self, products_df: pd.DataFrame) -> pd.DataFrame:
+        '''
+        Insert docstring
+        '''
+        if products_df['weight'].dtype == 'object':    
+            products_df = self.convert_product_weights(products_df)
+        products_df.dropna(inplace=True)
+        products_df = products_df[products_df['removed'] != 'Removed']
+
+        products_df['date_added'] = pd.to_datetime(products_df['date_added'], errors='raise', format='mixed', yearfirst=True)
+        products_df.sort_values(['date_added'], inplace=True, ascending=True)
+        products_df.drop_duplicates(subset=['product_name'], inplace=True, keep='last')
+
+        products_df['product_price'] = products_df['product_price'].str.extract(r'(\d+\.\d{2})$')
+        products_df['product_price'] = pd.to_numeric(products_df['product_price'], errors='coerce')
+
+        products_df.sort_index(ascending=True, inplace=True)
+        products_df.drop(['Unnamed: 0'], axis=1, inplace=True)
+        idx = np.arange(0, len(products_df), 1)
+        products_df.set_index(idx, inplace=True)
+        products_df.sort_index(ascending=True, inplace=True)
+        
+        return products_df
+
+    def clean_orders_data(self, orders_df: pd.DataFrame) -> pd.DataFrame:
+        '''
+        Insert docstring
+        '''
+        orders_df.drop(['level_0', 'index', 'first_name', 'last_name', '1'], axis=1, inplace=True)
+        
+        return orders_df
+
 
 if __name__ == '__main__':
     rds_connector = DatabaseConnector('db_creds.yaml')
     local_db_connector = DatabaseConnector('sales_data_creds.yaml')
     extractor = DataExtractor()
     cleaner = DataCleaning()
-    '''
+    #pd.set_option('display.max_columns', None)
+    
     print(rds_connector.list_db_tables())
+    '''
     table = extractor.read_rds_table(rds_connector, 'legacy_users')
     cleaned_user_data = cleaner.clean_user_data(table)
     print(cleaned_user_data)
-    
+
     pdf_table = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
     cleaned_card_data = cleaner.clean_card_data(pdf_table)
     print(cleaned_card_data)
 
     stores_data = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
     print(cleaner.clean_store_data(stores_data))
+
+    products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv', 'products.csv')
+    print(cleaner.clean_products_data(products_df))
     '''
-    #pd.set_option('display.max_columns', None)
-    products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv')
-    cleaner.convert_product_weights(products_df)
+    orders_table = extractor.read_rds_table(rds_connector, 'orders_table')
+    print(cleaner.clean_orders_data(orders_table))

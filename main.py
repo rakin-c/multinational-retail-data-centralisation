@@ -2,70 +2,131 @@ from database_utils import DatabaseConnector
 from data_extraction import DataExtractor
 from data_cleaning import DataCleaning
 
-def extract_user_data():
-    rds_connector = DatabaseConnector('db_creds.yaml')
-    extractor = DataExtractor()
-    user_df = extractor.read_rds_table(rds_connector, 'legacy_users')
-    return user_df
 
-def user_data_cleaning():
-    cleaner = DataCleaning()
-    user_data = extract_user_data()
-    cleaned_user_data = cleaner.clean_user_data(user_data)
-    return cleaned_user_data
+class UserData():
 
-def write_user_data():
-    local_db_connector = DatabaseConnector('sales_data_creds.yaml')
-    cleaned_data = user_data_cleaning()
-    local_db_connector.upload_to_db(cleaned_data, 'dim_users')
+    def __init__(self):
+        pass
 
-def extract_card_data():
-    extractor = DataExtractor()
-    card_df = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
-    return card_df
+    def extract_user_data(self):
+        rds_connector = DatabaseConnector('db_creds.yaml')
+        extractor = DataExtractor()
+        users_df = extractor.read_rds_table(rds_connector, 'legacy_users')
+        return users_df
 
-def card_data_cleaning():
-    cleaner = DataCleaning()
-    pdf_table = extract_card_data()
-    cleaned_pdf_table = cleaner.clean_card_data(pdf_table)
-    return cleaned_pdf_table
+    def user_data_cleaning(self):
+        cleaner = DataCleaning()
+        users_df = self.extract_user_data()
+        cleaned_user_data = cleaner.clean_user_data(users_df)
+        return cleaned_user_data
 
-def write_card_data():
-    local_db_connector = DatabaseConnector('sales_data_creds.yaml')
-    cleaned_card_data = card_data_cleaning()
-    local_db_connector.upload_to_db(cleaned_card_data, 'dim_card_details')
+    def write_user_data(self):
+        local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+        cleaned_user_data = self.user_data_cleaning()
+        local_db_connector.upload_to_db(cleaned_user_data, 'dim_users')
+
+class CardData():
+
+    def __init__(self):
+        pass
+
+    def extract_card_data(self):
+        extractor = DataExtractor()
+        cards_df = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
+        return cards_df
+
+    def card_data_cleaning(self):
+        cleaner = DataCleaning()
+        cards_df = self.extract_card_data()
+        cleaned_card_data = cleaner.clean_card_data(cards_df)
+        return cleaned_card_data
+
+    def write_card_data(self):
+        local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+        cleaned_card_data = self.card_data_cleaning()
+        local_db_connector.upload_to_db(cleaned_card_data, 'dim_card_details')
     
-def extract_number_of_stores():
-    extractor = DataExtractor()
-    number_of_stores = extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', extractor.api_headers)
-    print(f"Number of stores: {number_of_stores}")
-    return number_of_stores
+class StoreData():
 
-def extract_store_data():
-    extractor = DataExtractor()
-    store_df = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
-    return store_df
+    def __init__(self):
+        pass
 
-def store_data_cleaning():
-    cleaner = DataCleaning()
-    store_data = extract_store_data()
-    cleaned_store_data = cleaner.clean_store_data(store_data)
-    return cleaned_store_data
+    def extract_number_of_stores(self):
+        extractor = DataExtractor()
+        number_of_stores = extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', extractor.api_headers)
+        print(f"Number of stores: {number_of_stores}")
+        return number_of_stores
 
-def write_store_data():
-    local_db_connector = DatabaseConnector('sales_data_creds.yaml')
-    cleaned_store_data = store_data_cleaning()
-    local_db_connector.upload_to_db(cleaned_store_data, 'dim_store_details')
+    def extract_store_data(self):
+        extractor = DataExtractor()
+        stores_df = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
+        return stores_df
 
-def extract_product_data():
-    extractor = DataExtractor()
-    products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv', 'products.csv')
-    return products_df
+    def store_data_cleaning(self):
+        cleaner = DataCleaning()
+        stores_df = self.extract_store_data()
+        cleaned_store_data = cleaner.clean_store_data(stores_df)
+        return cleaned_store_data
 
-def product_data_cleaning():
-    cleaner = DataCleaning()
-    products_df = extract_product_data()
-    products_in_kg = cleaner.convert_product_weights(products_df)
-    pass
+    def write_store_data(self):
+        local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+        cleaned_store_data = self.store_data_cleaning()
+        local_db_connector.upload_to_db(cleaned_store_data, 'dim_store_details')
 
-print(extract_product_data())
+class ProductData():
+
+    def __init__(self):
+        pass
+
+    def extract_product_data(self):
+        extractor = DataExtractor()
+        products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv', 'products.csv')
+        return products_df
+
+    def product_data_cleaning(self):
+        cleaner = DataCleaning()
+        products_df = self.extract_product_data()
+        products_in_kg = cleaner.convert_product_weights(products_df)
+        cleaned_product_data = cleaner.clean_products_data(products_in_kg)
+        return cleaned_product_data
+
+    def write_product_data(self):
+        local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+        cleaned_product_data = self.product_data_cleaning()
+        local_db_connector.upload_to_db(cleaned_product_data, 'dim_products')
+
+class OrderData():
+    
+    def __init__(self):
+        pass
+
+    def extract_order_data(self):
+        rds_connector = DatabaseConnector('db_creds.yaml')
+        extractor = DataExtractor()
+        orders_df = extractor.read_rds_table(rds_connector, 'orders_table')
+        return orders_df
+
+    def order_data_cleaning(self):
+        cleaner = DataCleaning()
+        orders_df = self.extract_order_data()
+        cleaned_order_data = cleaner.clean_orders_data(orders_df)
+        return cleaned_order_data
+    
+    def write_order_data(self):
+        local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+        cleaned_order_data = self.order_data_cleaning()
+        local_db_connector.upload_to_db(cleaned_order_data, 'orders_table')
+
+
+def extract_table_names():
+    connector = DatabaseConnector('db_creds.yaml')
+    print('RDS database tables:', connector.list_db_tables())
+
+if __name__ == '__main__':
+    user_data = UserData()
+    card_data = CardData()
+    store_data = StoreData
+    product_data = ProductData()
+    order_data = OrderData()
+
+    order_data.write_order_data()

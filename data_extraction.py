@@ -147,7 +147,7 @@ if __name__ == '__main__':
     data = DataExtractor()
     connector = DatabaseConnector('db_creds.yaml')
     #pd.set_option('display.max_columns', None)
-    print(connector.list_db_tables())
-    num_stores = data.list_number_of_stores(f'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', data.api_headers)
     
-    print(data.retrieve_stores_data(f'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/0', data.api_headers))
+    print(connector.list_db_tables())
+
+    num_stores = data.list_number_of_stores(f'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', data.api_headers)
