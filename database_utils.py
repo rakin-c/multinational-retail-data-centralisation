@@ -1,11 +1,30 @@
 import pandas as pd
 import yaml
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import Engine, create_engine, inspect
 
 
 class DatabaseConnector:
     '''
-    Insert docstring
+    A class overseeing connection to, reading from, and uploading to SQL databases.
+
+    Attributes:
+    ----------
+    filepath: str
+        The path to the file containing the database login credentials.
+        The login credentials must contain a host name, password, username, database name, and port in the form:
+            HOST: host_name
+            PASSWORD: password
+            USER: username
+            DATABASE: database_name
+            PORT: port number, usually 5432
+        File format must be yaml.
+    
+    Methods:
+    -------
+    read_db_creds()
+        Reads the database credentials from a yaml file into a python dictionary.
+    init_db_engine()
+
     '''
     def __init__(self, filepath: str):
         self.filepath = filepath
@@ -13,41 +32,59 @@ class DatabaseConnector:
 
     def read_db_creds(self):
         '''
-        Reads the database credentials from a yaml file into a python dictionary.
+        Reads the database credentials from a yaml file into a python object. Should return a dictionary.
 
-        Returns:
-        -------
-        yaml_file: str
-            The yaml file to be parsed into a dictionary.
+        See Also:
+        --------
+        yaml.safe_load
         '''
         with open(self.filepath, 'r') as file:
             db_creds = yaml.safe_load(file)
         return db_creds
     
-    def init_db_engine(self):
+    def init_db_engine(self) -> Engine:
         '''
-        Insert docstring
+        Creates an engine using the database credentials which is used to connect to the database.
+
+        Returns:
+        -------
+        Engine
+
+        See Also:
+        --------
+        sqlalchemy.create_engine: Module and function used to create the engine
         '''
         db_creds = self.read_db_creds()
-        engine = create_engine(f"postgresql+psycopg2://{db_creds['RDS_USER']}:{db_creds['RDS_PASSWORD']}@{db_creds['RDS_HOST']}:{db_creds['RDS_PORT']}/{db_creds['RDS_DATABASE']}")
+        engine = create_engine(f"postgresql+psycopg2://{db_creds['USER']}:{db_creds['PASSWORD']}@{db_creds['HOST']}:{db_creds['PORT']}/{db_creds['DATABASE']}")
         return engine
     
-    def list_db_tables(self):
+    def list_db_tables(self) -> list:
         '''
-        Insert docstring
+        Extracts the table names from the RDS database.
+
+        Returns:
+        -------
+        list
         '''
         engine = self.init_db_engine()
         with engine.connect() as connection:
             inspector = inspect(engine)
         return inspector.get_table_names()
 
-    def upload_to_db(self, data: pd.DataFrame, table_name: str):
+    def upload_to_db(self, df: pd.DataFrame, table_name: str):
         '''
-        Insert docstring
+        Connects to database and writes a DataFrame to a table. Replaces existing data if table name already exists.
+
+        Parameters:
+        ----------
+        df: DataFrame
+            DataFrame to be written to an table in an SQL database.
+        table_name: str
+            Name of the table in the database to upload the DataFrame to.
         '''
         engine = self.init_db_engine()
         with engine.connect() as connection:
-            data.to_sql(table_name, connection, if_exists='replace')
+            df.to_sql(table_name, connection, if_exists='replace')
 
 
 if __name__ == '__main__':

@@ -25,7 +25,7 @@ class DataExtractor:
         Returns number of stores accessbile via API.
     retrieve_stores_data(retrieve_stores_enpoint, api_headers)
         Extracts store data for each store into a DataFrame.
-    extract_from_s3(s3_address)
+    extract_from_s3(s3_address, file_name)
         Downloads file from an S3 bucket and reads it into a DataFrame.
     '''
     def __init__(self):
@@ -125,7 +125,7 @@ class DataExtractor:
         Parameters:
         ----------
         s3_address: str
-            The S3 URI of the object to be downloaded and extracted.
+            The S3 path of the object to be downloaded and extracted. Can be a URI or a URL.
         file_name: str
             Name of the file to save the S3 object as.
 

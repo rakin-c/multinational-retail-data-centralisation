@@ -6,7 +6,16 @@ from data_extraction import DataExtractor
 
 class DataCleaning:
     '''
-    Insert docstring
+    A class to clean different DataFrames of the company's sales data.
+
+    Methods:
+    -------
+    clean_user_data(users_df)
+        Cleans data about the company's users
+    clean_card_data(cards_df)
+        Cleans company user's card data.
+    clean_store_data(stores_df)
+
     '''
     def __init__(self):
         pass
@@ -18,7 +27,7 @@ class DataCleaning:
         Parameters:
         ----------
         users_df: DataFrame
-            The user information extracted from the company's RDS database.
+            User information extracted from the company's RDS database.
         
         Returns:
         -------
@@ -52,8 +61,8 @@ class DataCleaning:
         
         users_df['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
         users_df.loc[((users_df['country_code']=='GB') & (~users_df['phone_number'].str.match(uk_number_regex))) |
-                      ((users_df['country_code']=='US') & (~users_df['phone_number'].str.match(us_number_regex))) |
-                      ((users_df['country_code']=='DE') & (~users_df['phone_number'].str.match(de_number_regex))), 'phone_number'] = np.nan
+                     ((users_df['country_code']=='US') & (~users_df['phone_number'].str.match(us_number_regex))) |
+                     ((users_df['country_code']=='DE') & (~users_df['phone_number'].str.match(de_number_regex))), 'phone_number'] = np.nan
         users_df.dropna(inplace=True)
 
         users_df.drop(['index'], axis=1, inplace=True)
@@ -65,7 +74,7 @@ class DataCleaning:
 
     def clean_card_data(self, cards_df: pd.DataFrame) -> pd.DataFrame:
         '''
-        Cleans company user card data, removing erroneous and NULL values, and verifies correct formatting.
+        Cleans company user's card data, removing erroneous and NULL values, and verifies correct formatting.
 
         Parameters:
         ----------
@@ -94,7 +103,16 @@ class DataCleaning:
     
     def clean_store_data(self, stores_df: pd.DataFrame) -> pd.DataFrame:
         '''
-        Insert docstring
+        Cleans data about the company's stores.
+
+        Parameters:
+        ----------
+        stores_df: DataFrame
+            Store information extracted from an API endpoint.
+
+        Returns:
+        -------
+        DataFrame
         '''
         mapping_dict = {
             'eeEurope': 'Europe',
@@ -123,7 +141,16 @@ class DataCleaning:
     
     def convert_product_weights(self, products_df: pd.DataFrame) -> pd.DataFrame:
         '''
-        Insert docstring
+        Converts the weights of all products in the DataFrame to kg.
+
+        Parameters:
+        ----------
+        products_df: DataFrame
+            Product information extracted from an S3 bucket.
+        
+        Returns:
+        -------
+        DataFrame
         '''
         mapping_dict = {
             ' ': ''
@@ -153,7 +180,16 @@ class DataCleaning:
 
     def clean_products_data(self, products_df: pd.DataFrame) -> pd.DataFrame:
         '''
-        Insert docstring
+        Cleans company's product data.
+
+        Parameters:
+        ----------
+        products_df: DataFrame
+            Product information extracted from an S3 bucket.
+        
+        Returns:
+        -------
+        DataFrame
         '''
         if products_df['weight'].dtype == 'object':    
             products_df = self.convert_product_weights(products_df)
@@ -177,15 +213,38 @@ class DataCleaning:
 
     def clean_orders_data(self, orders_df: pd.DataFrame) -> pd.DataFrame:
         '''
-        Insert docstring
+        Cleans data on the company's order history.
+
+        Parameters:
+        ----------
+        orders_df: DataFrame
+            Order information extracted from the company's RDS database.
+
+        Returns:
+        -------
+        DataFrame
         '''
         orders_df.drop(['level_0', 'index', 'first_name', 'last_name', '1'], axis=1, inplace=True)
-        
+        orders_df.dropna(inplace=True)
+
+        idx = np.arange(0, len(orders_df), 1)
+        orders_df.set_index(idx, inplace=True)
+        orders_df.sort_index(ascending=True, inplace=True)
+
         return orders_df
 
     def clean_datetimes_data(self, datetimes_df: pd.DataFrame) -> pd.DataFrame:
         '''
-        Insert docstring
+        Cleans DataFrame containing order dates and times.
+
+        Parameters:
+        ----------
+        datetimes_df: DataFrame
+            Dates and times of each order the company received.
+
+        Returns:
+        -------
+        DataFrame
         '''
         mapping_dict = {
             'NULL': np.nan
@@ -202,7 +261,11 @@ class DataCleaning:
 
         datetimes_df.drop('datetime', axis=1, inplace=True)
         datetimes_df.dropna(inplace=True)
-        
+
+        idx = np.arange(0, len(datetimes_df), 1)
+        datetimes_df.set_index(idx, inplace=True)
+        datetimes_df.sort_index(ascending=True, inplace=True)
+
         return datetimes_df
 
 
@@ -230,7 +293,7 @@ if __name__ == '__main__':
     print(cleaner.clean_products_data(products_df))
     '''
     orders_table = extractor.read_rds_table(rds_connector, 'orders_table')
-    print(cleaner.clean_orders_data(orders_table).info())
+    print(cleaner.clean_orders_data(orders_table))
     
     datetimes_df = extractor.extract_from_s3('https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json', 'date_details.json')
-    cleaner.clean_dates_data(datetimes_df)
+    print(cleaner.clean_datetimes_data(datetimes_df))
