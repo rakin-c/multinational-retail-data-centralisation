@@ -135,19 +135,37 @@ class DataExtractor:
         '''
         s3_address_split = s3_address.split('/')
         s3 = boto3.client('s3')
-        s3_bucket_name = s3_address_split[2]
-        s3_object_name = '/'.join(s3_address_split[3:])
-        s3.download_file(s3_bucket_name, s3_object_name, file_name)
-        with open(file_name, 'r') as file:
-            products_df = pd.read_csv(file)
-        return products_df
+
+        if s3_address.startswith('s3'):    
+            s3_bucket_name = s3_address_split[2]
+            s3_object_name = '/'.join(s3_address_split[3:])
+            s3.download_file(s3_bucket_name, s3_object_name, file_name)
+            if s3_object_name.endswith('csv'):
+                with open(file_name, 'r') as file:
+                    df = pd.read_csv(file)
+            if s3_object_name.endswith('json'):
+                with open(file_name, 'r') as file:
+                    df = pd.read_json(file)
+        
+        if s3_address.startswith('https'):
+            s3_bucket_name = s3_address_split[2].split('.')[0]
+            s3_object_name = '/'.join(s3_address_split[3:])
+            s3.download_file(s3_bucket_name, s3_object_name, file_name)
+            if s3_object_name.endswith('csv'):
+                with open(file_name, 'r') as file:
+                    df = pd.read_csv(file)
+            if s3_object_name.endswith('json'):
+                with open(file_name, 'r') as file:
+                    df = pd.read_json(file)
+
+        return df
 
 
 if __name__ == '__main__':
     data = DataExtractor()
     connector = DatabaseConnector('db_creds.yaml')
     #pd.set_option('display.max_columns', None)
-    
+
     print(connector.list_db_tables())
 
     num_stores = data.list_number_of_stores(f'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', data.api_headers)

@@ -117,6 +117,27 @@ class OrderData():
         cleaned_order_data = self.order_data_cleaning()
         local_db_connector.upload_to_db(cleaned_order_data, 'orders_table')
 
+class DatetimeData():
+    
+    def __init__(self):
+        pass
+
+    def extract_datetime_data(self):
+        extractor = DataExtractor()
+        datetimes_df = extractor.extract_from_s3('https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json', 'date_details.json')
+        return datetimes_df
+
+    def datetime_data_cleaning(self):
+        cleaner = DataCleaning()
+        datetimes_df = self.extract_datetime_data()
+        cleaned_datetime_data = cleaner.clean_datetimes_data(datetimes_df)
+        return cleaned_datetime_data
+    
+    def write_datetime_data(self):
+        local_db_connector = DatabaseConnector('sales_data_creds.yaml')
+        cleaned_datetime_data = self.datetime_data_cleaning()
+        local_db_connector.upload_to_db(cleaned_datetime_data, 'dim_date_times')
+
 
 def extract_table_names():
     connector = DatabaseConnector('db_creds.yaml')
@@ -128,5 +149,6 @@ if __name__ == '__main__':
     store_data = StoreData
     product_data = ProductData()
     order_data = OrderData()
+    datetime_data = DatetimeData()
 
-    order_data.write_order_data()
+    datetime_data.write_datetime_data()

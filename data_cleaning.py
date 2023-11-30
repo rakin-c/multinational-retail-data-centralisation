@@ -158,9 +158,9 @@ class DataCleaning:
         if products_df['weight'].dtype == 'object':    
             products_df = self.convert_product_weights(products_df)
         products_df.dropna(inplace=True)
-        products_df = products_df[products_df['removed'] != 'Removed']
+        products_df.loc[:] = products_df[products_df['removed'] != 'Removed']
 
-        products_df['date_added'] = pd.to_datetime(products_df['date_added'], errors='raise', format='mixed', yearfirst=True)
+        pd.to_datetime(products_df['date_added'], errors='raise', format='mixed', yearfirst=True)
         products_df.sort_values(['date_added'], inplace=True, ascending=True)
         products_df.drop_duplicates(subset=['product_name'], inplace=True, keep='last')
 
@@ -182,6 +182,28 @@ class DataCleaning:
         orders_df.drop(['level_0', 'index', 'first_name', 'last_name', '1'], axis=1, inplace=True)
         
         return orders_df
+
+    def clean_datetimes_data(self, datetimes_df: pd.DataFrame) -> pd.DataFrame:
+        '''
+        Insert docstring
+        '''
+        mapping_dict = {
+            'NULL': np.nan
+        }
+
+        datetimes_df.replace(mapping_dict, inplace=True)
+        datetimes_df['datetime'] = pd.to_datetime(datetimes_df[['year', 'month', 'day']], errors='coerce')
+        datetimes_df['datetime'] = pd.to_datetime(datetimes_df['datetime'].astype(str) + ' ' + datetimes_df['timestamp'], errors='coerce')
+
+        datetimes_df['year'] = datetimes_df['datetime'].dt.year
+        datetimes_df['month'] = datetimes_df['datetime'].dt.month
+        datetimes_df['day'] = datetimes_df['datetime'].dt.day
+        datetimes_df['timestamp'] = datetimes_df['datetime'].dt.time
+
+        datetimes_df.drop('datetime', axis=1, inplace=True)
+        datetimes_df.dropna(inplace=True)
+        
+        return datetimes_df
 
 
 if __name__ == '__main__':
@@ -208,4 +230,7 @@ if __name__ == '__main__':
     print(cleaner.clean_products_data(products_df))
     '''
     orders_table = extractor.read_rds_table(rds_connector, 'orders_table')
-    print(cleaner.clean_orders_data(orders_table))
+    print(cleaner.clean_orders_data(orders_table).info())
+    
+    datetimes_df = extractor.extract_from_s3('https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json', 'date_details.json')
+    cleaner.clean_dates_data(datetimes_df)
