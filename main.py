@@ -146,9 +146,9 @@ def extract_table_names():
 if __name__ == '__main__':
     user_data = UserData()
     card_data = CardData()
-    store_data = StoreData
+    store_data = StoreData()
     product_data = ProductData()
     order_data = OrderData()
     datetime_data = DatetimeData()
 
-    datetime_data.write_datetime_data()
+    card_data.write_card_data()
