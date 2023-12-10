@@ -3,7 +3,7 @@ from data_extraction import DataExtractor
 from data_cleaning import DataCleaning
 
 
-class UserData():
+class UserData:
     '''
     Class associated with manipulating the company's user data.
 
@@ -32,7 +32,7 @@ class UserData():
         cleaned_user_data = self.user_data_cleaning()
         local_db_connector.upload_to_db(cleaned_user_data, 'dim_users')
 
-class CardData():
+class CardData:
     '''
     Class associated with the company's card data.
 
@@ -60,7 +60,7 @@ class CardData():
         cleaned_card_data = self.card_data_cleaning()
         local_db_connector.upload_to_db(cleaned_card_data, 'dim_card_details')
     
-class StoreData():
+class StoreData:
     '''
     Class associated with the company's store data.
 
@@ -96,7 +96,7 @@ class StoreData():
         cleaned_store_data = self.store_data_cleaning()
         local_db_connector.upload_to_db(cleaned_store_data, 'dim_store_details')
 
-class ProductData():
+class ProductData:
     '''
     Class associated with company's product data.
 
@@ -125,7 +125,7 @@ class ProductData():
         cleaned_product_data = self.product_data_cleaning()
         local_db_connector.upload_to_db(cleaned_product_data, 'dim_products')
 
-class OrderData():
+class OrderData:
     '''
     Class associated with company's order data.
 
@@ -154,7 +154,7 @@ class OrderData():
         cleaned_order_data = self.order_data_cleaning()
         local_db_connector.upload_to_db(cleaned_order_data, 'orders_table')
 
-class DatetimeData():
+class DatetimeData:
     '''
     Class associated with company's order dates and times data.
 
