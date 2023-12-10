@@ -69,7 +69,7 @@ class DataExtractor:
         pdf_table = tabula.read_pdf(link, pages='all')
         return pd.concat(pdf_table)
     
-    def _list_number_of_stores(self, number_of_stores_endpoint: str, api_headers: dict) -> int:
+    def list_number_of_stores(self, number_of_stores_endpoint: str, api_headers: dict) -> int:
         '''
         Lists the number of stores that can be accessed via an API endpoint.
 
@@ -108,7 +108,7 @@ class DataExtractor:
         DataFrame
         '''
         stores_data = []
-        number_of_stores = self._list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', api_headers)
+        number_of_stores = self.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', api_headers)
 
         for store_number in range(number_of_stores):
             retrieve_store_endpoint = retrieve_store_endpoint.rstrip('/') #Strip trailing forward slash if given
