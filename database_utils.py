@@ -33,7 +33,7 @@ class DatabaseConnector:
     def __init__(self, filepath: str):
         self.db_creds = self._read_db_creds(filepath)
 
-    def _read_db_creds(self):
+    def _read_db_creds(self, filepath):
         '''
         Reads the database credentials from a yaml file into a python object. Should return a dictionary.
 
@@ -41,7 +41,7 @@ class DatabaseConnector:
         --------
         yaml.safe_load
         '''
-        with open(self.filepath, 'r') as file:
+        with open(filepath, 'r') as file:
             db_creds = yaml.safe_load(file)
         return db_creds
     
