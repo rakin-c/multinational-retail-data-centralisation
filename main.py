@@ -198,3 +198,10 @@ if __name__ == '__main__':
     product_data = ProductData()
     order_data = OrderData()
     datetime_data = DatetimeData()
+
+    user_data.write_user_data()
+    card_data.write_card_data()
+    store_data.write_store_data()
+    product_data.write_product_data()
+    order_data.write_order_data()
+    datetime_data.write_datetime_data()

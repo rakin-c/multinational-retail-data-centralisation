@@ -92,6 +92,10 @@ class DatabaseConnector:
         table_name: str
             Name of the table in the database to upload the DataFrame to.
         '''
-        engine = self.init_db_engine()
-        with engine.connect() as connection:
-            df.to_sql(table_name, connection, if_exists='replace')
+        try:
+            engine = self.init_db_engine()
+            with engine.connect() as connection:
+                df.to_sql(table_name, connection, if_exists='replace')
+                print(f"Uploaded to {table_name}")
+        except Exception as exception:
+            print(f"An error occurred: {exception}")
