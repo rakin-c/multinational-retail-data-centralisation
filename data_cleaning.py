@@ -64,11 +64,13 @@ class DataCleaning:
         users_df['date_of_birth'] = pd.to_datetime(users_df['date_of_birth'], format='mixed', errors='coerce')
         users_df.dropna(inplace=True)
         
+        #Verifies valid phone numbers for each country, setting them to np.nan if invalid
         users_df['phone_number'].replace(phone_number_mapping, inplace=True, regex=True)
         users_df.loc[((users_df['country_code']=='GB') & (~users_df['phone_number'].str.match(uk_number_regex))) |
                      ((users_df['country_code']=='US') & (~users_df['phone_number'].str.match(us_number_regex))) |
                      ((users_df['country_code']=='DE') & (~users_df['phone_number'].str.match(de_number_regex))), 'phone_number'] = np.nan
         
+        #Cleans up index values
         users_df.drop(['index'], axis=1, inplace=True)
         idx = np.arange(0, len(users_df), 1)
         users_df.set_index(idx, inplace=True)
@@ -95,10 +97,11 @@ class DataCleaning:
 
         cards_df.replace(mapping_dict, inplace=True)
         cards_df['date_payment_confirmed'] = pd.to_datetime(cards_df['date_payment_confirmed'], format='mixed', errors='coerce')
-        cards_df.loc[~(cards_df['expiry_date'].str.match(r'^((0[1-9])|(1[0-2]))\/(\d{2})$', na=True)), 'expiry_date'] = np.nan
-        cards_df.loc[~(cards_df['card_number'].str.match(r'^\d{11,}$', na=True)), 'card_number'] = cards_df.loc[~(cards_df['card_number'].str.match(r'^\d{11,}$', na=True)), 'card_number'].str.strip('?')
+        cards_df.loc[~(cards_df['expiry_date'].str.match(r'^((0[1-9])|(1[0-2]))\/(\d{2})$', na=True)), 'expiry_date'] = np.nan #Verifies expiry date format
+        cards_df.loc[~(cards_df['card_number'].str.match(r'^\d{11,}$', na=True)), 'card_number'] = cards_df.loc[~(cards_df['card_number'].str.match(r'^\d{11,}$', na=True)), 'card_number'].str.strip('?') #Strips leading/trailing question marks
         cards_df.dropna(inplace=True)
 
+        #Cleans up index values
         idx = np.arange(0, len(cards_df), 1)
         cards_df.set_index(idx, inplace=True)
         cards_df.sort_index(ascending=True, inplace=True)
@@ -126,16 +129,18 @@ class DataCleaning:
             'N/A': np.nan
         }
 
+        #Casts columns to datetime or numeric as required
         stores_df.replace(mapping_dict, inplace=True)
-        stores_df['staff_numbers'] = stores_df['staff_numbers'].str.extract(r'(\d+)')
         stores_df['opening_date'] = pd.to_datetime(stores_df['opening_date'], format='mixed', errors='coerce')
         stores_df['longitude'] = pd.to_numeric(stores_df['longitude'], errors='coerce')
         stores_df['latitude'] = pd.to_numeric(stores_df['latitude'], errors='coerce')
+        stores_df['staff_numbers'] = stores_df['staff_numbers'].str.extract(r'(\d+)') #Makes sure column only has numerical values
         stores_df['staff_numbers'] = pd.to_numeric(stores_df['staff_numbers'])
         
         stores_df.dropna(subset=['opening_date'], inplace=True)
         stores_df.drop(['lat'], axis=1, inplace=True)
 
+        #Cleans up index values
         stores_df.drop(['index'], axis=1, inplace=True)
         idx = np.arange(0, len(stores_df), 1)
         stores_df.set_index(idx, inplace=True)
@@ -163,6 +168,7 @@ class DataCleaning:
         products_df['weight'].replace(mapping_dict, inplace=True, regex=True)
         products_df.dropna(inplace=True)
 
+        #Converts multipack weights to a single weight
         products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'].str.rstrip('g').str.split('x')
         prod_list = []
         for item in products_df['weight']:
@@ -173,6 +179,7 @@ class DataCleaning:
         prod_list = [i/1000 for i in prod_list]
         products_df.loc[products_df['weight'].apply(type) == list, 'weight'] = prod_list
 
+        #Converts each unit to kg and casts all numbers as floats
         products_df.loc[products_df['weight'].str.contains('ml') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('ml') == True, 'weight'].str.rstrip('ml').astype('float', errors='raise').apply(lambda x: (x/1000))
         products_df.loc[products_df['weight'].str.contains('oz') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('oz') == True, 'weight'].str.rstrip('oz').astype('float', errors='raise').apply(lambda x: (x/35.274))
         products_df.loc[products_df['weight'].str.match(r'.*\dg') == True, 'weight'] = products_df.loc[products_df['weight'].str.match(r'.*\dg') == True, 'weight'].str.rstrip('g').astype('float', errors='raise').apply(lambda x: (x/1000))
@@ -195,13 +202,14 @@ class DataCleaning:
         -------
         DataFrame
         '''
+        #Avoids error if convert_product_weight() already applied
         if products_df['weight'].dtype == 'object':    
             products_df = self.convert_product_weights(products_df)
         products_df.dropna(inplace=True)
 
         products_df['date_added'] = pd.to_datetime(products_df['date_added'], errors='raise', format='mixed', yearfirst=True)
 
-        products_df['product_price'] = products_df['product_price'].str.extract(r'(\d+\.\d{2})$')
+        products_df['product_price'] = products_df['product_price'].str.extract(r'(\d+\.\d{2})$') #Converts price to a decimal number, removes other characters
         products_df['product_price'] = pd.to_numeric(products_df['product_price'], errors='coerce')
 
         products_df.sort_index(ascending=True, inplace=True)
@@ -278,24 +286,23 @@ if __name__ == '__main__':
     #pd.set_option('display.max_columns', None)
     
     print(rds_connector.list_db_tables())
-    '''
+    
     table = extractor.read_rds_table(rds_connector, 'legacy_users')
     cleaned_user_data = cleaner.clean_user_data(table)
-    print(cleaned_user_data)
+    print('\n', cleaned_user_data)
 
     pdf_table = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
     cleaned_card_data = cleaner.clean_card_data(pdf_table)
-    print(cleaned_card_data)
+    print('\n', cleaned_card_data)
 
     stores_data = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
-    print(cleaner.clean_store_data(stores_data))
+    print('\n', cleaner.clean_store_data(stores_data))
 
     products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv', 'products.csv')
-    print(cleaner.clean_products_data(products_df))
+    print('\n', cleaner.clean_products_data(products_df))
 
     orders_table = extractor.read_rds_table(rds_connector, 'orders_table')
-    print(cleaner.clean_orders_data(orders_table))
+    print('\n', cleaner.clean_orders_data(orders_table))
 
     datetimes_df = extractor.extract_from_s3('https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json', 'date_details.json')
-    print(cleaner.clean_datetimes_data(datetimes_df))
-    '''
+    print('\n', cleaner.clean_datetimes_data(datetimes_df))

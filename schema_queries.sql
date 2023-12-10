@@ -89,15 +89,15 @@ ALTER TABLE dim_store_details
 
 ALTER TABLE dim_store_details
     ALTER COLUMN country_code
-    TYPE VARCHAR(2);
+    TYPE VARCHAR(2);  --Country codes are two characters long.
 
 ALTER TABLE dim_store_details
     ALTER COLUMN continent
     TYPE VARCHAR(255);
 
-ALTER TABLE dim_store_details
+UPDATE dim_store_details
     SET "locality" = 'N/A',
-        "address" = 'N/A'
+        "address" = 'N/A',
     WHERE "store_code" LIKE 'WEB%';
 
 

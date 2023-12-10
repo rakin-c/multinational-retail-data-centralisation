@@ -24,11 +24,14 @@ class DatabaseConnector:
     read_db_creds()
         Reads the database credentials from a yaml file into a python dictionary.
     init_db_engine()
-
+        Creates an engine used to connect to the database.
+    list_db_tables()
+        Extracts the table names from the database.
+    upload_to_db(df, table_name)
+        Connects to database and writes a DataFrame to a table.
     '''
     def __init__(self, filepath: str):
         self.filepath = filepath
-        pass
 
     def read_db_creds(self):
         '''
@@ -60,7 +63,7 @@ class DatabaseConnector:
     
     def list_db_tables(self) -> list:
         '''
-        Extracts the table names from the RDS database.
+        Extracts the table names from the database.
 
         Returns:
         -------

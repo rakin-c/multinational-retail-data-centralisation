@@ -4,10 +4,17 @@ from data_cleaning import DataCleaning
 
 
 class UserData():
+    '''
+    Class associated with manipulating the company's user data.
 
-    def __init__(self):
-        pass
+    Methods:
+    -------
+    extract_user_data()
 
+    user_data_cleaning()
+    
+    write_user_data()
+    '''
     def extract_user_data(self):
         rds_connector = DatabaseConnector('db_creds.yaml')
         extractor = DataExtractor()
@@ -26,10 +33,17 @@ class UserData():
         local_db_connector.upload_to_db(cleaned_user_data, 'dim_users')
 
 class CardData():
+    '''
+    Class associated with the company's card data.
 
-    def __init__(self):
-        pass
+    Methods:
+    -------
+    extract_card_data()
 
+    card_data_cleaning()
+
+    write_card_data()
+    '''
     def extract_card_data(self):
         extractor = DataExtractor()
         cards_df = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
@@ -47,10 +61,19 @@ class CardData():
         local_db_connector.upload_to_db(cleaned_card_data, 'dim_card_details')
     
 class StoreData():
+    '''
+    Class associated with the company's store data.
 
-    def __init__(self):
-        pass
+    Methods:
+    -------
+    extract_number_of_stores()
 
+    extract_store_data()
+
+    store_data_cleaning()
+
+    write_store_data()
+    '''
     def extract_number_of_stores(self):
         extractor = DataExtractor()
         number_of_stores = extractor.list_number_of_stores('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores', extractor.api_headers)
@@ -74,10 +97,17 @@ class StoreData():
         local_db_connector.upload_to_db(cleaned_store_data, 'dim_store_details')
 
 class ProductData():
+    '''
+    Class associated with company's product data.
 
-    def __init__(self):
-        pass
+    Methods:
+    -------
+    extract_product_data()
 
+    product_data_cleaning()
+
+    write_product_data()
+    '''
     def extract_product_data(self):
         extractor = DataExtractor()
         products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv', 'products.csv')
@@ -96,10 +126,17 @@ class ProductData():
         local_db_connector.upload_to_db(cleaned_product_data, 'dim_products')
 
 class OrderData():
-    
-    def __init__(self):
-        pass
+    '''
+    Class associated with company's order data.
 
+    Methods:
+    -------
+    extract_order_data()
+
+    order_data_cleaning()
+
+    write_order_data()
+    '''
     def extract_order_data(self):
         rds_connector = DatabaseConnector('db_creds.yaml')
         extractor = DataExtractor()
@@ -118,10 +155,17 @@ class OrderData():
         local_db_connector.upload_to_db(cleaned_order_data, 'orders_table')
 
 class DatetimeData():
-    
-    def __init__(self):
-        pass
+    '''
+    Class associated with company's order dates and times data.
 
+    Methods:
+    -------
+    extract_datetime_data()
+
+    datetime_data_cleaning()
+
+    write_datetime_data()
+    '''
     def extract_datetime_data(self):
         extractor = DataExtractor()
         datetimes_df = extractor.extract_from_s3('https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json', 'date_details.json')
@@ -140,6 +184,10 @@ class DatetimeData():
 
 
 def extract_table_names():
+    '''
+    See:
+        DatabaseConnector.list_db_tables()
+    '''
     connector = DatabaseConnector('db_creds.yaml')
     print('RDS database tables:', connector.list_db_tables())
 
@@ -150,5 +198,3 @@ if __name__ == '__main__':
     product_data = ProductData()
     order_data = OrderData()
     datetime_data = DatetimeData()
-
-    card_data.write_card_data()
