@@ -9,8 +9,8 @@ class DatabaseConnector:
 
     Attributes:
     ----------
-    filepath: str
-        The path to the file containing the database login credentials.
+    db_creds: str
+        The credentials required to log in to the database.
         The login credentials must contain a host name, password, username, database name, and port in the form:
             HOST: host_name
             PASSWORD: password
@@ -31,7 +31,7 @@ class DatabaseConnector:
         Connects to database and writes a DataFrame to a table.
     '''
     def __init__(self, filepath: str):
-        self.filepath = filepath
+        self.db_creds = self._read_db_creds(filepath)
 
     def _read_db_creds(self):
         '''
@@ -45,7 +45,7 @@ class DatabaseConnector:
             db_creds = yaml.safe_load(file)
         return db_creds
     
-    def _init_db_engine(self) -> Engine:
+    def init_db_engine(self) -> Engine:
         '''
         Creates an engine using the database credentials which is used to connect to the database.
 
@@ -57,8 +57,15 @@ class DatabaseConnector:
         --------
         sqlalchemy.create_engine: Module and function used to create the engine
         '''
-        db_creds = self.read_db_creds()
-        engine = create_engine(f"postgresql+psycopg2://{db_creds['USER']}:{db_creds['PASSWORD']}@{db_creds['HOST']}:{db_creds['PORT']}/{db_creds['DATABASE']}")
+        DATABASE_TYPE = "postgresql"
+        DBAPI = "psycopg2"
+        USER = self.db_creds['USER']
+        PASSWORD = self.db_creds['PASSWORD']
+        HOST = self.db_creds['HOST']
+        PORT = self.db_creds['PORT']
+        DATABASE = self.db_creds['DATABASE']
+
+        engine = create_engine(f"{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}")
         return engine
     
     def list_db_tables(self) -> list:
@@ -88,8 +95,3 @@ class DatabaseConnector:
         engine = self.init_db_engine()
         with engine.connect() as connection:
             df.to_sql(table_name, connection, if_exists='replace')
-
-
-if __name__ == '__main__':
-    rds_connector = DatabaseConnector('db_creds.yaml')
-    print(rds_connector.list_db_tables())

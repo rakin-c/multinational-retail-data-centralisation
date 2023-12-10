@@ -30,8 +30,8 @@ class DataExtractor:
     '''
     def __init__(self):
         self.api_headers = {
-                            'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'
-                            }
+            'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'
+        }
 
     def read_rds_table(self, connector_instance: DatabaseConnector, table_name: str) -> pd.DataFrame:
         '''

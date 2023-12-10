@@ -168,7 +168,7 @@ class DataCleaning:
         products_df['weight'].replace(mapping_dict, inplace=True, regex=True)
         products_df.dropna(inplace=True)
 
-        #Converts multipack weights to a single weight
+        #Converts multipack weights (e.g. 10 x 120g) to a single weight
         products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'] = products_df.loc[products_df['weight'].str.contains('x') == True, 'weight'].str.rstrip('g').str.split('x')
         prod_list = []
         for item in products_df['weight']:
@@ -236,6 +236,7 @@ class DataCleaning:
         orders_df.drop(['level_0', 'index', 'first_name', 'last_name', '1'], axis=1, inplace=True)
         orders_df.dropna(inplace=True)
 
+        #Cleans up index values
         idx = np.arange(0, len(orders_df), 1)
         orders_df.set_index(idx, inplace=True)
         orders_df.sort_index(ascending=True, inplace=True)
@@ -260,8 +261,8 @@ class DataCleaning:
         }
 
         datetimes_df.replace(mapping_dict, inplace=True)
-        datetimes_df['datetime'] = pd.to_datetime(datetimes_df[['year', 'month', 'day']], errors='coerce')
-        datetimes_df['datetime'] = pd.to_datetime(datetimes_df['datetime'].astype(str) + ' ' + datetimes_df['timestamp'], errors='coerce')
+        datetimes_df['datetime'] = pd.to_datetime(datetimes_df[['year', 'month', 'day']], errors='coerce') #Creates temporary datetime column
+        datetimes_df['datetime'] = pd.to_datetime(datetimes_df['datetime'].astype(str) + ' ' + datetimes_df['timestamp'], errors='coerce') #Concatenates timestamp to the date
 
         datetimes_df['year'] = datetimes_df['datetime'].dt.year
         datetimes_df['month'] = datetimes_df['datetime'].dt.month
@@ -271,38 +272,9 @@ class DataCleaning:
         datetimes_df.drop('datetime', axis=1, inplace=True)
         datetimes_df.dropna(inplace=True)
 
+        #Cleans up index values
         idx = np.arange(0, len(datetimes_df), 1)
         datetimes_df.set_index(idx, inplace=True)
         datetimes_df.sort_index(ascending=True, inplace=True)
 
         return datetimes_df
-
-
-if __name__ == '__main__':
-    rds_connector = DatabaseConnector('db_creds.yaml')
-    local_db_connector = DatabaseConnector('sales_data_creds.yaml')
-    extractor = DataExtractor()
-    cleaner = DataCleaning()
-    #pd.set_option('display.max_columns', None)
-    
-    print(rds_connector.list_db_tables())
-    
-    table = extractor.read_rds_table(rds_connector, 'legacy_users')
-    cleaned_user_data = cleaner.clean_user_data(table)
-    print('\n', cleaned_user_data)
-
-    pdf_table = extractor.retrieve_pdf_data('https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf')
-    cleaned_card_data = cleaner.clean_card_data(pdf_table)
-    print('\n', cleaned_card_data)
-
-    stores_data = extractor.retrieve_stores_data('https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details', extractor.api_headers)
-    print('\n', cleaner.clean_store_data(stores_data))
-
-    products_df = extractor.extract_from_s3('s3://data-handling-public/products.csv', 'products.csv')
-    print('\n', cleaner.clean_products_data(products_df))
-
-    orders_table = extractor.read_rds_table(rds_connector, 'orders_table')
-    print('\n', cleaner.clean_orders_data(orders_table))
-
-    datetimes_df = extractor.extract_from_s3('https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json', 'date_details.json')
-    print('\n', cleaner.clean_datetimes_data(datetimes_df))
