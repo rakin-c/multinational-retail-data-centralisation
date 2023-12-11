@@ -1,4 +1,21 @@
 # Multinational Retail Data Centralisation
+## Table of Contents
+1. [Introduction](#introduction)
+    - [Project Aims](#project-aims)
+2. [Installation Instructions](#installation-instructions)
+    - [Required Software](#required-software)
+    - [AWS CLI Configuration](#package-installation)
+    - [Package Installation](#package-installation)
+    - [Setup](#setup)
+3. [Usage Instructions](#usage-instructions)
+    - [Uploading to the Database](#uploading-to-the-database)
+    - [Creating the Database Schema](#creating-the-database-schema)
+    - [Querying the Database for Sales Data](#querying-the-database-for-sales-data)
+4. [Structure](#structure)
+    - [File Structure](#file-structure)
+    - [Database Structure](#database-structure)
+5. [License](#license)
+
 ## Introduction
 For a multinational company selling various goods across the globe, sales data can be stored in many different places, making it inconvenient and difficult for it to be accessed for analysis by current members of the team.
 
